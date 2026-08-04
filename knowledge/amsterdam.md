@@ -13,7 +13,7 @@ Amsterdam is the capital of the Netherlands, a city of approximately 900,000 res
 - **Vondelpark**: The city's largest and most popular park.
 - **Royal Palace and Dam Square**: The historic ceremonial center of the city.
 - **NEMO Science Museum and the National Maritime Museum**: Located in the eastern docklands.
-- **Day trips**: Zaanse Schans (windmills), Keukenhof gardens (spring only), Haarlem, and Utrecht, are easily reached by train or bus.
+- **Day trips**: Zaanse Schans (windmills), Keukenhof gardens (spring only), Haarlem, and Utrecht are easily reached by train or bus.
 
 ## Local Cuisine
 

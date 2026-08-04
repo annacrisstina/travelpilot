@@ -114,3 +114,38 @@ class AssistantTools:
             "matches": matches,
             "match_count": len(matches),
         }
+
+    def plan_trip(
+        self,
+        destination: str,
+        days: int,
+        interests: str = "",
+        budget: str = "medium",
+    ) -> dict:
+        """
+        Generate a personalized travel itinerary.
+
+        Use this tool when the user asks to plan a trip or create
+        an itinerary for a supported destination.
+
+        Args:
+            destination: Destination city (e.g. "Rome").
+            days: Number of travel days.
+            interests: Optional interests such as "history",
+                "food", "museums" or "nature".
+            budget: Budget level ("low", "medium", or "high").
+
+        Returns:
+            A dictionary containing the itinerary information.
+        """
+        return {
+            "status": "success",
+            "destination": destination,
+            "days": days,
+            "interests": interests,
+            "budget": budget,
+            "message": (
+                "Trip planning tool registered successfully. "
+                "Itinerary generation will be implemented next."
+            ),
+        }

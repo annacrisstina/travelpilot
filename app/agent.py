@@ -70,5 +70,6 @@ root_agent = Agent(
         assistant_tools.list_documents,
         assistant_tools.read_document,
         assistant_tools.search_documents,
+        assistant_tools.plan_trip,
     ],
 )
