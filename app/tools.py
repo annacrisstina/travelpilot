@@ -123,29 +123,73 @@ class AssistantTools:
         budget: str = "medium",
     ) -> dict:
         """
-        Generate a personalized travel itinerary.
-
-        Use this tool when the user asks to plan a trip or create
-        an itinerary for a supported destination.
+        Generate a personalized travel itinerary using the travel
+        knowledge base.
 
         Args:
             destination: Destination city (e.g. "Rome").
             days: Number of travel days.
-            interests: Optional interests such as "history",
-                "food", "museums" or "nature".
-            budget: Budget level ("low", "medium", or "high").
+            interests: Optional travel interests.
+            budget: Budget level ("low", "medium", "high").
 
         Returns:
-            A dictionary containing the itinerary information.
+            A dictionary containing the destination guide and
+            planning instructions for the AI model.
         """
+
+        if days < 1:
+            return {
+                "status": "error",
+                "error_message": "The number of travel days must be at least 1.",
+            }
+
+        if budget not in {"low", "medium", "high"}:
+            return {
+                "status": "error",
+                "error_message": (
+                    "Budget must be one of: low, medium or high."
+                ),
+            }
+        if days > 30:
+            return {
+                "status": "error",
+                "error_message": (
+                    "The maximum supported itinerary length is 30 days."
+                ),
+            }
+        
+        filename = (
+            destination.strip()
+            .lower()
+            .replace(" ", "_")
+            + ".md"
+        )
+
+        try:
+            destination_guide = self.knowledge.read_document(filename)
+        except FileNotFoundError:
+            return {
+                "status": "error",
+                "destination": destination,
+                "error_message": (
+                    f"No travel guide is available for '{destination}'."
+                ),
+            }
+
         return {
             "status": "success",
-            "destination": destination,
+            "destination": destination.title(),
             "days": days,
-            "interests": interests,
             "budget": budget,
-            "message": (
-                "Trip planning tool registered successfully. "
-                "Itinerary generation will be implemented next."
+            "interests": interests,
+            "destination_guide": destination_guide,
+            "instructions": (
+                f"Create a personalized {days}-day itinerary for "
+                f"{destination.title()} using ONLY the provided "
+                f"destination guide. Consider the user's interests "
+                f"('{interests}') and budget level ('{budget}'). "
+                "Organize attractions day by day, recommend local "
+                "food when appropriate, include transportation "
+                "suggestions and finish with practical travel tips."
             ),
         }
