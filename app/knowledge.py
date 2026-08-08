@@ -3,13 +3,18 @@ Knowledge providers.
 
 A knowledge provider gives the assistant access to documents without
 requiring the rest of the application to know where those documents live.
+
+Google Cloud libraries are imported lazily so that local mode never
+touches Google Cloud at import time.
 """
 
-from pathlib import Path
-from typing import Protocol
+from __future__ import annotations
 
-from google.api_core.exceptions import NotFound
-from google.cloud import storage
+from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from google.cloud import storage
 
 
 class KnowledgeProvider(Protocol):
@@ -72,8 +77,23 @@ class CloudKnowledgeProvider:
             raise ValueError("The Cloud Storage bucket name is required.")
 
         self.bucket_name = bucket_name
-        self.client = client or storage.Client(project=project_id)
+        self.client = client or self._create_client(project_id)
         self.bucket = self.client.bucket(bucket_name)
+
+    @staticmethod
+    def _create_client(project_id: str | None) -> storage.Client:
+        """Create a Cloud Storage client, importing the SDK on demand."""
+
+        try:
+            from google.cloud import storage as cloud_storage
+        except ImportError as error:
+            raise ImportError(
+                "google-cloud-storage is required when "
+                "KNOWLEDGE_SOURCE=cloud. Install it with: "
+                "pip install google-cloud-storage"
+            ) from error
+
+        return cloud_storage.Client(project=project_id)
 
     def list_documents(self) -> list[str]:
         """Return all Markdown object names from the bucket."""
@@ -91,6 +111,8 @@ class CloudKnowledgeProvider:
 
         if not filename.strip():
             raise ValueError("The filename cannot be empty.")
+
+        from google.api_core.exceptions import NotFound
 
         blob = self.bucket.blob(filename)
 

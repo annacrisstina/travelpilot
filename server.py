@@ -1,3 +1,5 @@
+"""FastAPI entry point serving the ADK agent (Docker / Cloud Run)."""
+
 import os
 import uvicorn
 from fastapi import FastAPI

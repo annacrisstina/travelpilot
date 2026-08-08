@@ -18,13 +18,13 @@ class LocalKnowledgeProviderTests(unittest.TestCase):
         self.temporary_directory = TemporaryDirectory()
         self.knowledge_path = Path(self.temporary_directory.name)
 
-        (self.knowledge_path / "day1.md").write_text(
-            "# Day 1\n\nCompute Engine and VPC.",
+        (self.knowledge_path / "paris.md").write_text(
+            "# Paris\n\nThe Louvre and the Eiffel Tower.",
             encoding="utf-8",
         )
 
-        (self.knowledge_path / "day2.md").write_text(
-            "# Day 2\n\nCloud Storage and Cloud SQL.",
+        (self.knowledge_path / "rome.md").write_text(
+            "# Rome\n\nThe Colosseum and the Roman Forum.",
             encoding="utf-8",
         )
 
@@ -42,14 +42,14 @@ class LocalKnowledgeProviderTests(unittest.TestCase):
     def test_list_documents_returns_only_markdown_files(self) -> None:
         self.assertEqual(
             self.provider.list_documents(),
-            ["day1.md", "day2.md"],
+            ["paris.md", "rome.md"],
         )
 
     def test_read_document_returns_contents(self) -> None:
-        content = self.provider.read_document("day1.md")
+        content = self.provider.read_document("rome.md")
 
-        self.assertIn("Compute Engine", content)
-        self.assertIn("VPC", content)
+        self.assertIn("Colosseum", content)
+        self.assertIn("Roman Forum", content)
 
     def test_read_missing_document_raises_file_not_found(self) -> None:
         with self.assertRaises(FileNotFoundError):
@@ -77,10 +77,10 @@ class CloudKnowledgeProviderTests(unittest.TestCase):
 
     def test_list_documents_filters_markdown_objects(self) -> None:
         markdown_blob = MagicMock()
-        markdown_blob.name = "day1.md"
+        markdown_blob.name = "rome.md"
 
         nested_markdown_blob = MagicMock()
-        nested_markdown_blob.name = "archive/day2.md"
+        nested_markdown_blob.name = "archive/paris.md"
 
         text_blob = MagicMock()
         text_blob.name = "notes.txt"
@@ -95,7 +95,7 @@ class CloudKnowledgeProviderTests(unittest.TestCase):
 
         self.assertEqual(
             documents,
-            ["archive/day2.md", "day1.md"],
+            ["archive/paris.md", "rome.md"],
         )
 
         self.client.list_blobs.assert_called_once_with(
@@ -105,17 +105,17 @@ class CloudKnowledgeProviderTests(unittest.TestCase):
     def test_read_document_downloads_utf8_text(self) -> None:
         blob = MagicMock()
         blob.download_as_text.return_value = (
-            "# Day 3\n\nDocker and Kubernetes."
+            "# Tokyo\n\nShibuya and Mount Fuji."
         )
 
         self.bucket.blob.return_value = blob
 
-        content = self.provider.read_document("day3.md")
+        content = self.provider.read_document("tokyo.md")
 
-        self.assertIn("Docker", content)
-        self.assertIn("Kubernetes", content)
+        self.assertIn("Shibuya", content)
+        self.assertIn("Mount Fuji", content)
 
-        self.bucket.blob.assert_called_once_with("day3.md")
+        self.bucket.blob.assert_called_once_with("tokyo.md")
         blob.download_as_text.assert_called_once_with(
             encoding="utf-8"
         )

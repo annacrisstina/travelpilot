@@ -11,11 +11,11 @@ class AgentDefinitionTests(unittest.TestCase):
     def test_agent_name(self) -> None:
         self.assertEqual(
             root_agent.name,
-            "summer_school_assistant",
+            "travel_pilot",
         )
 
-    def test_agent_has_three_tools(self) -> None:
-        self.assertEqual(len(root_agent.tools), 3)
+    def test_agent_has_four_tools(self) -> None:
+        self.assertEqual(len(root_agent.tools), 4)
 
     def test_agent_has_model_and_instruction(self) -> None:
         self.assertTrue(root_agent.model)

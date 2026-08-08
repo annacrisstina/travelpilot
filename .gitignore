@@ -1,18 +1,24 @@
 # Virtual environments
 .venv/
 .venv-*/
+.python-version
 
 # Environment variables and credentials
 .env
-*.json
+service-account*.json
+credentials*.json
 
-# Python cache and generated files
+# Python cache and build artifacts
 __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
 .coverage
 htmlcov/
+
+# ADK runtime state
+.adk/
+*.db
 
 # IDE configuration
 .vscode/
@@ -21,16 +27,7 @@ htmlcov/
 # Operating-system files
 .DS_Store
 Thumbs.db
+*.swp
 
 # Logs
 *.log
-
-# Google Cloud credentials
-service-account*.json
-credentials*.json
-
-# Python environment
-.python-version
-
-# macOS / Linux
-*.swp

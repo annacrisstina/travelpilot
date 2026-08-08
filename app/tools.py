@@ -9,7 +9,7 @@ from app.knowledge import KnowledgeProvider
 
 
 class AssistantTools:
-    """Operations that the AI agent can perform on the travel knowledge base."""
+    """Operations the AI agent can perform on the knowledge base."""
 
     def __init__(self, knowledge_provider: KnowledgeProvider):
         self.knowledge = knowledge_provider
@@ -62,7 +62,7 @@ class AssistantTools:
 
     def search_documents(self, keyword: str) -> dict:
         """
-        Search all travel knowledge documents and return short matching excerpts.
+        Search all travel documents and return short matching excerpts.
 
         Use this tool when the user asks which travel documents mention
         a specific destination, attraction or travel-related topic.
@@ -140,7 +140,9 @@ class AssistantTools:
         if days < 1:
             return {
                 "status": "error",
-                "error_message": "The number of travel days must be at least 1.",
+                "error_message": (
+                    "The number of travel days must be at least 1."
+                ),
             }
 
         if budget not in {"low", "medium", "high"}:
@@ -157,7 +159,7 @@ class AssistantTools:
                     "The maximum supported itinerary length is 30 days."
                 ),
             }
-        
+
         filename = (
             destination.strip()
             .lower()

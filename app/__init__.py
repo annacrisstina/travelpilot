@@ -1,3 +1,3 @@
-"""Summer School AI Assistant package."""
+"""TravelPilot application package."""
 
 from . import agent

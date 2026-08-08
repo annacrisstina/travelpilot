@@ -1,3 +1,5 @@
+"""CLI demo of the knowledge tools, without calling Gemini."""
+
 from pathlib import Path
 
 from app.knowledge import LocalKnowledgeProvider
@@ -7,7 +9,7 @@ from app.tools import AssistantTools
 def main() -> None:
     """Demonstrate the local knowledge tools without using Google Cloud."""
 
-    print("\n=== Summer School AI Assistant ===\n")
+    print("\n=== TravelPilot ===\n")
 
     provider = LocalKnowledgeProvider(Path("knowledge"))
     tools = AssistantTools(provider)
@@ -22,20 +24,20 @@ def main() -> None:
 
     print(f"\nTotal documents: {documents_result['document_count']}")
 
-    print("\nReading day2.md")
+    print("\nReading rome.md")
     print("-------------------")
 
-    reading_result = tools.read_document("day2.md")
+    reading_result = tools.read_document("rome.md")
 
     if reading_result["status"] == "success":
         print(reading_result["content"])
     else:
         print(reading_result["error_message"])
 
-    print("\nSearching for 'Docker'")
+    print("\nSearching for 'museum'")
     print("----------------------")
 
-    search_result = tools.search_documents("Docker")
+    search_result = tools.search_documents("museum")
 
     if search_result["status"] == "error":
         print(search_result["error_message"])

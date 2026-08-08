@@ -15,25 +15,25 @@ class AssistantToolsTests(unittest.TestCase):
         self.temporary_directory = TemporaryDirectory()
         knowledge_path = Path(self.temporary_directory.name)
 
-        (knowledge_path / "containers.md").write_text(
+        (knowledge_path / "paris.md").write_text(
             "\n".join(
                 [
-                    "# Containers",
+                    "# Paris",
                     "",
-                    "Docker packages applications into images.",
-                    "Kubernetes orchestrates containers.",
+                    "The Louvre is the world's largest art museum.",
+                    "Montmartre offers panoramic city views.",
                 ]
             ),
             encoding="utf-8",
         )
 
-        (knowledge_path / "storage.md").write_text(
+        (knowledge_path / "rome.md").write_text(
             "\n".join(
                 [
-                    "# Storage",
+                    "# Rome",
                     "",
-                    "Cloud Storage stores objects.",
-                    "Cloud SQL provides relational databases.",
+                    "The Colosseum hosted ancient gladiator games.",
+                    "The Vatican Museums display Renaissance art.",
                 ]
             ),
             encoding="utf-8",
@@ -52,15 +52,15 @@ class AssistantToolsTests(unittest.TestCase):
         self.assertEqual(result["document_count"], 2)
         self.assertEqual(
             result["documents"],
-            ["containers.md", "storage.md"],
+            ["paris.md", "rome.md"],
         )
 
     def test_read_document_returns_structured_result(self) -> None:
-        result = self.tools.read_document("storage.md")
+        result = self.tools.read_document("paris.md")
 
         self.assertEqual(result["status"], "success")
-        self.assertEqual(result["filename"], "storage.md")
-        self.assertIn("Cloud Storage", result["content"])
+        self.assertEqual(result["filename"], "paris.md")
+        self.assertIn("Louvre", result["content"])
 
     def test_read_missing_document_returns_error(self) -> None:
         result = self.tools.read_document("missing.md")
@@ -70,18 +70,18 @@ class AssistantToolsTests(unittest.TestCase):
         self.assertIn("not found", result["error_message"].lower())
 
     def test_search_returns_matching_excerpts(self) -> None:
-        result = self.tools.search_documents("Docker")
+        result = self.tools.search_documents("Colosseum")
 
         self.assertEqual(result["status"], "success")
-        self.assertEqual(result["keyword"], "Docker")
+        self.assertEqual(result["keyword"], "Colosseum")
         self.assertEqual(result["match_count"], 1)
 
         match = result["matches"][0]
 
-        self.assertEqual(match["filename"], "containers.md")
+        self.assertEqual(match["filename"], "rome.md")
         self.assertGreaterEqual(len(match["excerpts"]), 1)
         self.assertIn(
-            "Docker",
+            "Colosseum",
             match["excerpts"][0]["text"],
         )
         self.assertIsInstance(
@@ -90,17 +90,17 @@ class AssistantToolsTests(unittest.TestCase):
         )
 
     def test_search_is_case_insensitive(self) -> None:
-        result = self.tools.search_documents("kubernetes")
+        result = self.tools.search_documents("montmartre")
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["match_count"], 1)
         self.assertEqual(
             result["matches"][0]["filename"],
-            "containers.md",
+            "paris.md",
         )
 
     def test_search_with_no_matches_is_successful(self) -> None:
-        result = self.tools.search_documents("Bigtable")
+        result = self.tools.search_documents("Reykjavik")
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["match_count"], 0)

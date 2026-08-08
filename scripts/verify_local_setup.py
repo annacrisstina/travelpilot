@@ -1,5 +1,5 @@
 """
-Verify the local Day 4 project setup.
+Verify the local TravelPilot setup.
 
 This script does not contact Google Cloud and does not call Gemini.
 """
@@ -77,7 +77,7 @@ def main() -> None:
     assert read_result["content"].strip()
     print_check("read_document works")
 
-    search_result = tools.search_documents("Docker")
+    search_result = tools.search_documents("museum")
     assert search_result["status"] == "success"
     assert isinstance(search_result["matches"], list)
     assert all("filename" in match for match in search_result["matches"])
@@ -92,8 +92,8 @@ def main() -> None:
     assert empty_search_result["status"] == "error"
     print_check("Empty-search handling works")
 
-    assert root_agent.name == "summer_school_assistant"
-    assert len(root_agent.tools) == 3
+    assert root_agent.name == "travel_pilot"
+    assert len(root_agent.tools) == 4
     print_check("ADK agent loaded")
     print(f"  Agent: {root_agent.name}")
     print(f"  Tools: {len(root_agent.tools)}")

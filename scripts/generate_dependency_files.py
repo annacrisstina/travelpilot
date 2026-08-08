@@ -3,7 +3,7 @@ Generate reproducible dependency files from the active virtual environment.
 
 Outputs:
     requirements-pinned.txt
-        Direct workshop dependencies with exact versions.
+        Direct project dependencies with exact versions.
 
     requirements-lock.txt
         Every installed package and exact version from pip freeze.
@@ -24,6 +24,8 @@ DIRECT_DEPENDENCIES = [
     "google-cloud-aiplatform",
     "python-dotenv",
     "rich",
+    "fastapi",
+    "uvicorn",
 ]
 
 

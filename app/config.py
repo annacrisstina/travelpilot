@@ -1,8 +1,9 @@
 """
 Application configuration.
 
-The project initially uses a local knowledge base. Google Cloud settings
-become mandatory only when the cloud knowledge source is selected.
+The project runs out-of-the-box with a local knowledge base and the
+Gemini API (a free Google AI Studio key). Google Cloud settings become
+mandatory only when Vertex AI or the cloud knowledge source is selected.
 """
 
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ class Config:
     knowledge_source: KnowledgeSource
     local_knowledge_directory: str
 
+    use_vertexai: bool
     project_id: str | None
     location: str
     knowledge_bucket: str | None
@@ -60,9 +62,20 @@ def load_config() -> Config:
         "knowledge",
     )
 
+    use_vertexai = os.getenv(
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "FALSE",
+    ).strip().lower() in {"true", "1", "yes"}
+
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or None
     location = os.getenv("GOOGLE_CLOUD_LOCATION", "global")
     knowledge_bucket = os.getenv("KNOWLEDGE_BUCKET") or None
+
+    if use_vertexai and not project_id:
+        raise ValueError(
+            "GOOGLE_GENAI_USE_VERTEXAI=TRUE requires "
+            "GOOGLE_CLOUD_PROJECT to be set."
+        )
 
     if knowledge_source == "cloud":
         missing: list[str] = []
@@ -83,6 +96,7 @@ def load_config() -> Config:
         model=model,
         knowledge_source=knowledge_source,
         local_knowledge_directory=local_knowledge_directory,
+        use_vertexai=use_vertexai,
         project_id=project_id,
         location=location,
         knowledge_bucket=knowledge_bucket,

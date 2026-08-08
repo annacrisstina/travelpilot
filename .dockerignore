@@ -4,5 +4,8 @@
 .env.*
 __pycache__
 *.pyc
+*.db
+.adk
+docs
 tests
 requirements-lock.txt
