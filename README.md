@@ -234,9 +234,7 @@ TravelPilot/
 
 TravelPilot started as my project during the Google Cloud & Agentic AI Summer School at the National University of Science and Technology POLITEHNICA Bucharest, organized with support from Google Romania. That's where I built the first version of the agent and got my introduction to the Agent Development Kit.
 
-After the summer school ended, I kept developing the project on my own. I redesigned the architecture around a pluggable knowledge provider, improved the documentation, added Docker support and Cloud Run deployment, and made Google Cloud an optional backend instead of a requirement, so everything now runs locally with a free Gemini API key.
-
-This is a personal project, not affiliated with or endorsed by Google.
+After the summer school ended, I continued developing the project independently. I redesigned it into a local-first application by introducing a pluggable knowledge provider, allowing it to run entirely with a local Markdown knowledge base and a Gemini API key, without requiring a Google Cloud project. Google Cloud Storage and Vertex AI remain available as optional backends.
 
 ---
 
