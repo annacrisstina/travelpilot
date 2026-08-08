@@ -48,14 +48,6 @@ The agent depends only on the `KnowledgeProvider` interface (`app/knowledge.py`)
 
 ---
 
-## Screenshots
-
-| ADK Web UI | Generated Itinerary |
-|---|---|
-| ![ADK Web UI](docs/images/adk-ui.png) | ![Example trip](docs/images/example-trip.png) |
-
----
-
 ## Quick Start
 
 Requires Python 3.11+.
@@ -235,17 +227,6 @@ TravelPilot/
 - Search for museums.
 - Plan a 4-day trip to Rome focused on history and food.
 - Plan a budget trip to Paris.
-
----
-
-## Current Status
-
-- ✅ Local knowledge base
-- ✅ Google Cloud Storage support
-- ✅ Docker support
-- ✅ Cloud Run deployment
-- ✅ Local-first architecture
-- ✅ Optional Vertex AI backend
 
 ---
 
