@@ -35,24 +35,6 @@
 
   ---
 
-  ## Screenshots
-
-  <!--
-    Add the screenshot files below before publishing, or delete this section:
-      docs/images/chat.png       - the ADK web UI answering a travel question
-      docs/images/itinerary.png  - a generated day-by-day itinerary
-  -->
-
-  **Asking about a destination** — the agent selects a tool, reads the matching guide and answers from it.
-
-  ![TravelPilot answering a travel question in the ADK web UI](docs/images/chat.png)
-
-  **Generating an itinerary** — `plan_trip` retrieves the destination guide, and the model composes a day-by-day plan from it.
-
-  ![A generated day-by-day itinerary](docs/images/itinerary.png)
-
-  ---
-
   ## Features
 
   - **Grounded travel answers** — the agent reads complete guides for 11 destinations and never invents information that is not in the knowledge base.
