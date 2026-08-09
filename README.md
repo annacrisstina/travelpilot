@@ -1,243 +1,253 @@
-# ✈️ TravelPilot
+  # ✈️ TravelPilot
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Google ADK](https://img.shields.io/badge/Google_ADK-agent-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+  > **An AI-powered travel planning assistant built with the Google Agent Development Kit and Gemini.** Grounded answers and personalized day-by-day itineraries from a curated knowledge base — local-first by design, with Google Cloud as an optional deployment target.
 
-TravelPilot is an AI-powered travel planning assistant built with the Google Agent Development Kit (ADK) and Gemini. It answers travel questions from a Markdown knowledge base and generates personalized day-by-day itineraries.
+  [![CI](https://github.com/annacrisstina/travelpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/annacrisstina/travelpilot/actions/workflows/ci.yml)
+  [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+  [![Google ADK](https://img.shields.io/badge/Google_ADK-2.6-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
+  [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+  [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-The project is **local-first**: it runs out of the box with a free Gemini API key — no Google Cloud project or bucket required. Google Cloud Storage and Vertex AI are optional backends selected through environment variables.
+  *Started as a prototype at the **Google Cloud & Agentic AI Summer School** (POLITEHNICA Bucharest, supported by Google Romania) — independently redesigned and extended since.*
 
----
+  ---
 
-## Features
+  ## Overview
 
-- 🌍 Browse and read complete travel guides for 11 destinations
-- 🔍 Keyword search across the knowledge base with line-level excerpts
-- 🗺️ Personalized itineraries by destination, duration, interests and budget
-- 💻 Local Markdown knowledge base — zero cloud setup (default)
-- ☁️ Optional Google Cloud Storage knowledge base
-- 🚀 Deployable as a container to any host, including Cloud Run
+  TravelPilot is a tool-using AI agent that answers travel questions and generates personalized itineraries. It grounds every answer in a curated knowledge base of 19 Markdown travel guides — 11 destinations plus cross-cutting topics such as budgeting and transportation — and is instructed never to answer beyond them.
 
----
+  The application is **local-first**: it runs end to end with a free Gemini API key — no Google Cloud project, no bucket, no service account. Google Cloud Storage and Vertex AI are optional backends selected through environment variables, so the same codebase runs unchanged on a laptop and on Cloud Run.
 
-## Architecture
+  The current architecture is my own independent work — see [What I Built Independently](#what-i-built-independently).
 
-```text
-User
-  |
-  v
-TravelPilot (ADK Agent, Gemini)
-  |
-  +-- list_documents()
-  +-- read_document(filename)
-  +-- search_documents(keyword)
-  +-- plan_trip(destination, days, interests, budget)
-              |
-              v
-       KnowledgeProvider          (selected by KNOWLEDGE_SOURCE)
-          /       \
-         /         \
-Local files    Cloud Storage
-(knowledge/)   (KNOWLEDGE_BUCKET)
-```
+  ---
 
-The agent depends only on the `KnowledgeProvider` interface (`app/knowledge.py`); storage backends are interchangeable. Google Cloud libraries are imported lazily, so local mode never touches Google Cloud.
+  ## Key Engineering Highlights
 
----
+  - **Local-first by design** — the full application runs with a free Gemini API key; Google Cloud is an optional deployment backend, never a requirement.
+  - **Pluggable knowledge architecture** — a two-method `KnowledgeProvider` `Protocol` with interchangeable local-filesystem and Cloud Storage implementations.
+  - **Lazy cloud imports** — the Google Cloud SDK loads only when cloud mode is selected; local mode never touches it, even at import time.
+  - **Fail-fast configuration** — environment variables are validated once into a frozen dataclass; misconfiguration fails at startup, naming the missing variable.
+  - **Grounded itinerary generation** — `plan_trip` validates input and constrains the model to a retrieved destination guide instead of free generation.
+  - **One image, every environment** — the same non-root Docker container runs locally and on Cloud Run; Vertex AI keeps production free of stored API keys.
+  - **Offline test suite** — providers, tools and agent wiring are tested without network access, in CI on Python 3.11 and 3.12.
 
-## Quick Start
+  ---
 
-Requires Python 3.11+.
+  ## Screenshots
 
-**1. Create and activate a virtual environment:**
+  <!--
+    Add the screenshot files below before publishing, or delete this section:
+      docs/images/chat.png       - the ADK web UI answering a travel question
+      docs/images/itinerary.png  - a generated day-by-day itinerary
+  -->
 
-```bash
-python -m venv .venv
+  **Asking about a destination** — the agent selects a tool, reads the matching guide and answers from it.
 
-source .venv/bin/activate
-# Windows:
-.venv\Scripts\activate
-```
+  ![TravelPilot answering a travel question in the ADK web UI](docs/images/chat.png)
 
-**2. Install dependencies:**
+  **Generating an itinerary** — `plan_trip` retrieves the destination guide, and the model composes a day-by-day plan from it.
 
-```bash
-pip install -r requirements.txt
-```
+  ![A generated day-by-day itinerary](docs/images/itinerary.png)
 
-**3. Copy the environment file:**
+  ---
 
-```bash
-cp .env.example .env
-```
+  ## Features
 
-**4. Add your API key.** You **must** edit `.env` and set a Gemini API key before running the application:
+  - **Grounded travel answers** — the agent reads complete guides for 11 destinations and never invents information that is not in the knowledge base.
+  - **Keyword search with line-level excerpts** — `search_documents` returns matching filenames with up to three excerpts each, including line numbers, so answers stay traceable to a source.
+  - **AI-generated itineraries** — `plan_trip` takes a destination, duration, interests and budget, validates them, and hands the model a structured brief built from the destination guide.
+  - **Two interchangeable knowledge backends** — local Markdown files by default, a Google Cloud Storage bucket when configured; the agent code is identical in both cases.
+  - **Fail-fast configuration** — a missing bucket or project is reported at startup, not mid-conversation.
+  - **Container and Cloud Run ready** — a FastAPI entry point serves the agent from a non-root image with the knowledge base baked in.
 
-```bash
-GOOGLE_API_KEY=your_google_ai_studio_api_key_here
-```
+  ---
 
-Create a free key at [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey). This is the only credential needed in local mode.
+  ## Architecture
 
-**5. Start the application:**
+  ```text
+                        User
+                          │
+                          ▼
+          ┌───────────────────────────────┐
+          │   TravelPilot ADK Agent       │
+          │   (Gemini 2.5 Flash)          │
+          └───────────────┬───────────────┘
+                          │  tool calls
+          ┌───────────────┴───────────────┐
+          │  list_documents               │
+          │  read_document(filename)      │
+          │  search_documents(keyword)    │
+          │  plan_trip(dest, days, ...)   │
+          └───────────────┬───────────────┘
+                          ▼
+          ┌───────────────────────────────┐
+          │      KnowledgeProvider        │   ← selected by KNOWLEDGE_SOURCE
+          │        (Protocol)             │
+          └───────┬───────────────┬───────┘
+                  │               │
+      LocalKnowledgeProvider   CloudKnowledgeProvider
+          ./knowledge/*.md      gs://KNOWLEDGE_BUCKET
+  ```
 
-```bash
-adk web
-```
+  A request flows top to bottom: the model decides which tool to call, the tools resolve every document access through the `KnowledgeProvider` interface, and the concrete provider — local filesystem or Cloud Storage — is selected once at startup from the `KNOWLEDGE_SOURCE` environment variable. Nothing above the provider line knows which backend is active, which is what keeps the laptop, Docker and Cloud Run deployments on a single code path.
 
-Open http://localhost:8000 and select the `app` agent.
+  ---
 
-Optional checks:
+  ## Technologies
 
-```bash
-python main.py                        # exercise the knowledge tools directly
-python scripts/verify_local_setup.py  # verify setup without calling Gemini
-python -m unittest discover tests     # run the test suite
-```
+  | Area | Technologies |
+  |---|---|
+  | **AI** | Google Agent Development Kit (ADK) 2.6, Gemini 2.5 Flash |
+  | **Backend** | Python 3.11+, FastAPI |
+  | **Cloud** | Google Cloud Storage, Vertex AI, Cloud Run |
+  | **DevOps** | Docker, GitHub Actions |
+  | **Knowledge base** | Markdown |
 
----
+  ---
 
-## Configuration
+  ## Engineering Decisions
 
-| Variable | Default | Description |
-|---|---|---|
-| `MODEL` | `gemini-2.5-flash` | Gemini model used by the agent. |
-| `GOOGLE_GENAI_USE_VERTEXAI` | `FALSE` | `FALSE`: Gemini API with `GOOGLE_API_KEY`. `TRUE`: Vertex AI (requires a Google Cloud project). |
-| `GOOGLE_API_KEY` | — | Required when `GOOGLE_GENAI_USE_VERTEXAI=FALSE`. Free key from [AI Studio](https://aistudio.google.com/apikey). |
-| `KNOWLEDGE_SOURCE` | `local` | `local`: Markdown files on disk. `cloud`: Google Cloud Storage bucket. |
-| `LOCAL_KNOWLEDGE_DIRECTORY` | `knowledge` | Directory of Markdown guides (local mode). Relative paths resolve from the project root. |
-| `GOOGLE_CLOUD_PROJECT` | — | Required when `GOOGLE_GENAI_USE_VERTEXAI=TRUE` or `KNOWLEDGE_SOURCE=cloud`. |
-| `GOOGLE_CLOUD_LOCATION` | `global` | Vertex AI location. |
-| `KNOWLEDGE_BUCKET` | — | Required when `KNOWLEDGE_SOURCE=cloud`. Bucket holding the Markdown guides. |
+  **A `Protocol`, not a base class.** `KnowledgeProvider` (`app/knowledge.py`) is a two-method structural interface both backends satisfy without inheritance or registration. The tools never learn where documents live, so swapping local files for a Cloud Storage bucket is a one-variable change, not a code change.
 
-`.env.example` contains a documented template for both configurations.
+  **Lazy cloud imports.** The Cloud Storage SDK is imported at its point of use, so local mode never initializes a client or looks for credentials — not even at import time.
 
----
-
-## Google Cloud Storage Mode (Optional)
+  **Grounding over free generation.** `plan_trip` validates the request (1–30 days, budget tier, a guide that exists) and returns the destination guide with a structured planning brief. Invalid input yields a structured error, not a plausible-sounding hallucinated trip.
 
-Serve the knowledge base from a Cloud Storage bucket instead of local files:
+  **Configuration as a boundary.** `load_config()` reads the environment once into a frozen dataclass. Inconsistent combinations — Vertex AI without a project, cloud knowledge without a bucket — fail at startup, naming the missing variable.
 
-1. Authenticate and create a bucket:
+  **One entry point, every environment.** `server.py` serves the agent through FastAPI and binds to `PORT`, so the same image runs under Docker locally and on Cloud Run without modification.
 
-   ```bash
-   gcloud auth application-default login
-   gcloud storage buckets create gs://YOUR_BUCKET --project YOUR_PROJECT
-   ```
-
-2. Upload the knowledge base:
+  ---
 
-   ```bash
-   python scripts/upload_knowledge.py --dry-run   # preview
-   python scripts/upload_knowledge.py --bucket YOUR_BUCKET
-   ```
+  ## What I Built Independently
 
-3. Configure `.env`:
+  TravelPilot began as a small prototype. The engineering below is my independent work:
 
-   ```bash
-   KNOWLEDGE_SOURCE=cloud
-   GOOGLE_CLOUD_PROJECT=YOUR_PROJECT
-   KNOWLEDGE_BUCKET=YOUR_BUCKET
-   ```
+  - **Redesigned the application local-first** — cut the barrier to entry from a full Google Cloud setup to a free API key and three commands.
+  - **Designed the `KnowledgeProvider` abstraction** — a structural interface that lets local files and Cloud Storage share one code path, so storage concerns never leak into the agent logic.
+  - **Built the configuration system** — environment-driven, validated once, fail-fast; each deployment mode demands only the variables it actually uses.
+  - **Made Google Cloud fully optional** — lazy SDK imports guarantee local mode never touches Google Cloud, even at import time.
+  - **Implemented AI-powered itinerary generation** — the `plan_trip` tool, with input validation and prompt rules that constrain every plan to the retrieved guide.
+  - **Restructured the codebase into clean modules** — configuration, knowledge access, tools and agent wiring each with a single responsibility.
+  - **Containerized and prepared for Cloud Run** — a slim non-root Docker image with the knowledge base baked in, plus a Vertex AI production path where the service account replaces stored API keys.
+  - **Hardened quality and developer experience** — offline unit tests in CI on Python 3.11/3.12, a setup verification script, a knowledge upload tool and a documented `.env.example`.
 
-Backends combine freely — e.g. a cloud knowledge base with the plain Gemini API, or Vertex AI (`GOOGLE_GENAI_USE_VERTEXAI=TRUE`) with local files.
+  ---
 
----
+  ## Quick Start
 
-## Docker
+  Requires Python 3.11+ and a free [Google AI Studio API key](https://aistudio.google.com/apikey) — the only credential needed in local mode.
 
-The image bundles the `knowledge/` directory, so local mode works in a container out of the box:
+  ```bash
+  python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+  pip install -r requirements.txt
+  cp .env.example .env                                # then set GOOGLE_API_KEY
+  adk web
+  ```
 
-```bash
-docker build -t travelpilot .
+  Open <http://localhost:8000> and select the `app` agent. Try *"Plan a 4-day trip to Rome focused on history and food."*
 
-docker run --rm -p 8080:8080 \
-  -e GOOGLE_API_KEY=YOUR_API_KEY \
-  travelpilot
-```
+  ```bash
+  python scripts/verify_local_setup.py   # verify the setup without calling Gemini
+  python -m unittest discover tests      # run the test suite
+  ```
 
-For Cloud Storage mode, pass the cloud variables instead:
+  ### Configuration
 
-```bash
-docker run --rm -p 8080:8080 \
-  -e GOOGLE_API_KEY=YOUR_API_KEY \
-  -e KNOWLEDGE_SOURCE=cloud \
-  -e GOOGLE_CLOUD_PROJECT=YOUR_PROJECT \
-  -e KNOWLEDGE_BUCKET=YOUR_BUCKET \
-  -v ~/.config/gcloud:/home/appuser/.config/gcloud:ro \
-  travelpilot
-```
+  | Variable | Default | Description |
+  |---|---|---|
+  | `MODEL` | `gemini-2.5-flash` | Gemini model used by the agent. |
+  | `GOOGLE_GENAI_USE_VERTEXAI` | `FALSE` | `FALSE`: Gemini API with `GOOGLE_API_KEY`. `TRUE`: Vertex AI (requires a Google Cloud project). |
+  | `GOOGLE_API_KEY` | — | Required when `GOOGLE_GENAI_USE_VERTEXAI=FALSE`. |
+  | `KNOWLEDGE_SOURCE` | `local` | `local`: Markdown files on disk. `cloud`: Google Cloud Storage bucket. |
+  | `LOCAL_KNOWLEDGE_DIRECTORY` | `knowledge` | Directory of Markdown guides. Relative paths resolve from the project root. |
+  | `GOOGLE_CLOUD_PROJECT` | — | Required when `GOOGLE_GENAI_USE_VERTEXAI=TRUE` or `KNOWLEDGE_SOURCE=cloud`. |
+  | `GOOGLE_CLOUD_LOCATION` | `global` | Vertex AI location. |
+  | `KNOWLEDGE_BUCKET` | — | Required when `KNOWLEDGE_SOURCE=cloud`. |
 
-The volume mount provides Application Default Credentials to the container; on Cloud Run this is unnecessary. The app listens on `PORT` (default `8080`) at http://localhost:8080.
+  The two backends are independent: a Cloud Storage knowledge base can be paired with the plain Gemini API, and Vertex AI with local files.
 
----
+  <details>
+  <summary><b>Google Cloud Storage knowledge base</b></summary>
 
-## Cloud Run Deployment
+  ```bash
+  gcloud auth application-default login
+  gcloud storage buckets create gs://YOUR_BUCKET --project YOUR_PROJECT
 
-```bash
-gcloud run deploy travelpilot \
-  --source . \
-  --project YOUR_PROJECT \
-  --region europe-west1 \
-  --allow-unauthenticated \
-  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT,GOOGLE_CLOUD_LOCATION=global,KNOWLEDGE_SOURCE=cloud,KNOWLEDGE_BUCKET=YOUR_BUCKET"
-```
+  python scripts/upload_knowledge.py --dry-run          # preview
+  python scripts/upload_knowledge.py --bucket YOUR_BUCKET
+  ```
 
-Notes:
+  Then set `KNOWLEDGE_SOURCE=cloud`, `GOOGLE_CLOUD_PROJECT` and `KNOWLEDGE_BUCKET` in `.env`.
 
-- Vertex AI mode is recommended on Cloud Run — the service account authenticates automatically, so no API key is needed. Grant it `roles/aiplatform.user` and `roles/storage.objectViewer` on the bucket.
-- Local knowledge mode also works on Cloud Run (`KNOWLEDGE_SOURCE=local`) since the guides are baked into the image.
+  </details>
 
----
+  <details>
+  <summary><b>Docker</b></summary>
 
-## Project Structure
+  The image bundles `knowledge/`, so local mode works in a container with no extra setup. The app listens on `PORT` (default `8080`).
 
-```text
-TravelPilot/
-│
-├── app/
-│   ├── agent.py        # ADK agent definition
-│   ├── config.py       # environment-driven configuration
-│   ├── knowledge.py    # KnowledgeProvider: local + Cloud Storage
-│   ├── prompts.py      # system prompt
-│   └── tools.py        # agent tools
-│
-├── knowledge/          # Markdown travel guides (local knowledge base)
-├── scripts/
-│   ├── upload_knowledge.py     # upload knowledge base to Cloud Storage
-│   └── verify_local_setup.py   # offline setup verification
-├── tests/              # unit tests (no network access required)
-├── docs/images/        # README screenshots
-├── main.py             # CLI demo of the knowledge tools
-├── server.py           # FastAPI entry point (Docker / Cloud Run)
-├── Dockerfile
-├── requirements.txt
-└── README.md
-```
+  ```bash
+  docker build -t travelpilot .
+  docker run --rm -p 8080:8080 -e GOOGLE_API_KEY=YOUR_API_KEY travelpilot
+  ```
 
----
+  For Cloud Storage mode, add the cloud variables and mount Application Default Credentials:
 
-## Example Prompts
+  ```bash
+  docker run --rm -p 8080:8080 \
+    -e GOOGLE_API_KEY=YOUR_API_KEY \
+    -e KNOWLEDGE_SOURCE=cloud \
+    -e GOOGLE_CLOUD_PROJECT=YOUR_PROJECT \
+    -e KNOWLEDGE_BUCKET=YOUR_BUCKET \
+    -v ~/.config/gcloud:/home/appuser/.config/gcloud:ro \
+    travelpilot
+  ```
 
-- Tell me about Rome.
-- What destinations are available?
-- Search for museums.
-- Plan a 4-day trip to Rome focused on history and food.
-- Plan a budget trip to Paris.
+  </details>
 
----
+  <details>
+  <summary><b>Cloud Run deployment</b></summary>
 
-## Acknowledgements
+  ```bash
+  gcloud run deploy travelpilot \
+    --source . \
+    --project YOUR_PROJECT \
+    --region europe-west1 \
+    --allow-unauthenticated \
+    --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT,GOOGLE_CLOUD_LOCATION=global,KNOWLEDGE_SOURCE=cloud,KNOWLEDGE_BUCKET=YOUR_BUCKET"
+  ```
 
-TravelPilot started as my project during the Google Cloud & Agentic AI Summer School at the National University of Science and Technology POLITEHNICA Bucharest, organized with support from Google Romania. That's where I built the first version of the agent and got my introduction to the Agent Development Kit.
+  Vertex AI is the intended production mode: the Cloud Run service account authenticates automatically, so no API key is stored. Grant it `roles/aiplatform.user` and `roles/storage.objectViewer` on the bucket.
 
-After the summer school ended, I continued developing the project independently. I redesigned it into a local-first application by introducing a pluggable knowledge provider, allowing it to run entirely with a local Markdown knowledge base and a Gemini API key, without requiring a Google Cloud project. Google Cloud Storage and Vertex AI remain available as optional backends.
+  </details>
 
----
+  ---
 
-## License
+  ## Project Structure
 
-Released under the [MIT License](LICENSE).
+  ```text
+  TravelPilot/
+  ├── app/
+  │   ├── agent.py        # ADK agent definition and provider selection
+  │   ├── config.py       # environment-driven configuration, validated once
+  │   ├── knowledge.py    # KnowledgeProvider protocol + local/Cloud Storage backends
+  │   ├── prompts.py      # system prompt and tool-routing rules
+  │   └── tools.py        # the four agent tools
+  ├── knowledge/          # 19 Markdown travel guides (local knowledge base)
+  ├── scripts/            # knowledge upload, offline setup verification
+  ├── tests/              # unit tests, no network access required
+  ├── server.py           # FastAPI entry point (Docker / Cloud Run)
+  ├── main.py             # CLI demo of the knowledge tools
+  └── Dockerfile
+  ```
+
+  ---
+
+  ## Acknowledgements
+
+  TravelPilot started during the **Google Cloud & Agentic AI Summer School** at the National University of Science and Technology POLITEHNICA Bucharest, organized with support from Google Romania, where I was introduced to the Agent Development Kit and wrote the first prototype of the agent.
+
+  Everything since — the architecture, the local-first redesign, the `KnowledgeProvider` abstraction, the configuration system, itinerary generation, Docker support, the Cloud Run deployment path, the tests and the documentation — is my own independent work.
