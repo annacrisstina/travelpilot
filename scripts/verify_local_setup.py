@@ -1,10 +1,15 @@
 """
 Verify the local TravelPilot setup.
 
-This script does not contact Google Cloud and does not call Gemini.
+All checks run offline, except one: when a real GOOGLE_API_KEY is
+configured, the script also confirms that the configured model is
+available for that key, so model problems surface here with a clear
+message instead of as a 404 mid-conversation. No generation request
+is ever made. Pass --offline to skip the availability check.
 """
 
 from pathlib import Path
+import os
 import sys
 
 
@@ -15,14 +20,90 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 from app.agent import root_agent
-from app.config import load_config
+from app.config import DEFAULT_MODEL, load_config
 from app.knowledge import LocalKnowledgeProvider
 from app.tools import AssistantTools
+
+
+# Substrings identifying models that cannot serve the agent (embedding,
+# media and experimental variants), used when suggesting alternatives.
+NON_CHAT_MODEL_MARKERS = (
+    "embedding",
+    "image",
+    "audio",
+    "tts",
+    "live",
+    "preview",
+    "exp",
+)
 
 
 def print_check(message: str) -> None:
     """Print a successful verification step."""
     print(f"✓ {message}")
+
+
+def check_model_availability(model: str, use_vertexai: bool) -> None:
+    """
+    Confirm the configured model exists for the configured API key.
+
+    Skipped when no real API key is set (e.g. CI), when Vertex AI is
+    selected, or when --offline is passed. A network problem is
+    reported as a warning, never a failure; an unavailable model is a
+    hard failure with the fix in the message.
+    """
+
+    api_key = os.getenv("GOOGLE_API_KEY", "").strip()
+
+    if use_vertexai:
+        print("- Model availability check skipped (Vertex AI mode).")
+        return
+
+    if not api_key or api_key.startswith("your_"):
+        print("- Model availability check skipped (no GOOGLE_API_KEY).")
+        return
+
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=api_key)
+        listed = list(client.models.list())
+    except Exception as error:  # network / auth problems are not fatal
+        print(f"! Model availability check skipped ({error})")
+        return
+
+    available: set[str] = set()
+
+    for entry in listed:
+        name = (entry.name or "").removeprefix("models/")
+        actions = getattr(entry, "supported_actions", None)
+
+        if name and (not actions or "generateContent" in actions):
+            available.add(name)
+
+    if model in available:
+        print_check(f"Model '{model}' is available for this API key")
+        return
+
+    flash_suggestions = sorted(
+        name
+        for name in available
+        if "flash" in name
+        and not any(marker in name for marker in NON_CHAT_MODEL_MARKERS)
+    )
+
+    print(f"\n✗ Configured model '{model}' is not available for this API key.")
+
+    if flash_suggestions:
+        print("\n  Available Flash models:")
+        for name in flash_suggestions:
+            print(f"    {name}")
+
+    print(
+        f"\n  Recommended: set MODEL={DEFAULT_MODEL} in .env — a rolling"
+        "\n  alias that always points to the current stable Flash model.\n"
+    )
+    sys.exit(1)
 
 
 def main() -> None:
@@ -98,8 +179,13 @@ def main() -> None:
     print(f"  Agent: {root_agent.name}")
     print(f"  Tools: {len(root_agent.tools)}")
 
-    print("\nAll local checks passed.")
-    print("No Google Cloud request or Gemini request was made.\n")
+    if "--offline" in sys.argv:
+        print("- Model availability check skipped (--offline).")
+    else:
+        check_model_availability(config.model, config.use_vertexai)
+
+    print("\nAll checks passed.")
+    print("No generation request was made.\n")
 
 
 if __name__ == "__main__":

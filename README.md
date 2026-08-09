@@ -5,7 +5,7 @@
   [![CI](https://github.com/annacrisstina/travelpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/annacrisstina/travelpilot/actions/workflows/ci.yml)
   [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
   [![Google ADK](https://img.shields.io/badge/Google_ADK-2.6-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
-  [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+  [![Gemini](https://img.shields.io/badge/Gemini-Flash-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
   [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
@@ -54,7 +54,7 @@
                           ▼
           ┌───────────────────────────────┐
           │   TravelPilot ADK Agent       │
-          │   (Gemini 2.5 Flash)          │
+          │   (Gemini Flash)              │
           └───────────────┬───────────────┘
                           │  tool calls
           ┌───────────────┴───────────────┐
@@ -81,7 +81,7 @@
 
   | Area | Technologies |
   |---|---|
-  | **AI** | Google Agent Development Kit (ADK) 2.6, Gemini 2.5 Flash |
+  | **AI** | Google Agent Development Kit (ADK) 2.6, Gemini Flash |
   | **Backend** | Python 3.11+, FastAPI |
   | **Cloud** | Google Cloud Storage, Vertex AI, Cloud Run |
   | **DevOps** | Docker, GitHub Actions |
@@ -120,27 +120,27 @@
 
   ## Quick Start
 
-  Requires Python 3.11+ and a free [Google AI Studio API key](https://aistudio.google.com/apikey) — the only credential needed in local mode.
+  Requires Python 3.11+ and a free Google AI Studio API key — the only credential needed in local mode. To create one, sign in at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and click **Create API key**.
 
   ```bash
   python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
   pip install -r requirements.txt
   cp .env.example .env                                # then set GOOGLE_API_KEY
+  python scripts/verify_local_setup.py                # checks setup + model availability
   adk web
   ```
 
   Open <http://localhost:8000> and select the `app` agent. Try *"Plan a 4-day trip to Rome focused on history and food."*
 
   ```bash
-  python scripts/verify_local_setup.py   # verify the setup without calling Gemini
-  python -m unittest discover tests      # run the test suite
+  python -m unittest discover tests      # run the test suite (offline)
   ```
 
   ### Configuration
 
   | Variable | Default | Description |
   |---|---|---|
-  | `MODEL` | `gemini-2.5-flash` | Gemini model used by the agent. |
+  | `MODEL` | `gemini-flash-latest` | Gemini model used by the agent. The default is a rolling alias that always resolves to the current stable Flash model, so it works for newly created API keys; set a dated name to pin a version. |
   | `GOOGLE_GENAI_USE_VERTEXAI` | `FALSE` | `FALSE`: Gemini API with `GOOGLE_API_KEY`. `TRUE`: Vertex AI (requires a Google Cloud project). |
   | `GOOGLE_API_KEY` | — | Required when `GOOGLE_GENAI_USE_VERTEXAI=FALSE`. |
   | `KNOWLEDGE_SOURCE` | `local` | `local`: Markdown files on disk. `cloud`: Google Cloud Storage bucket. |
@@ -150,6 +150,13 @@
   | `KNOWLEDGE_BUCKET` | — | Required when `KNOWLEDGE_SOURCE=cloud`. |
 
   The two backends are independent: a Cloud Storage knowledge base can be paired with the plain Gemini API, and Vertex AI with local files.
+
+  <details>
+  <summary><b>Troubleshooting: model errors (404 NOT_FOUND)</b></summary>
+
+  `404 NOT_FOUND — this model is no longer available to new users` means the configured `MODEL` has been retired for your API key; Google occasionally closes dated model names to newly created keys. Set `MODEL=gemini-flash-latest` in `.env` (the default), or run `python scripts/verify_local_setup.py` — it checks the configured model against your key and lists the Flash models you can use.
+
+  </details>
 
   <details>
   <summary><b>Google Cloud Storage knowledge base</b></summary>
@@ -205,6 +212,18 @@
   Vertex AI is the intended production mode: the Cloud Run service account authenticates automatically, so no API key is stored. Grant it `roles/aiplatform.user` and `roles/storage.objectViewer` on the bucket.
 
   </details>
+
+  ---
+
+  ## Listing Available Models
+
+  If you're unsure which Gemini model is available for your API key, run:
+
+  ```bash
+  python scripts/list_available_models.py
+  ```
+
+  This utility lists the supported Gemini chat models available for your API key.
 
   ---
 

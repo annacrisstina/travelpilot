@@ -19,6 +19,11 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 KnowledgeSource = Literal["local", "cloud"]
 
+# Rolling alias maintained by Google that always resolves to the
+# current stable Flash model. Dated names (e.g. gemini-2.5-flash) can
+# be retired for newly created API keys and then return 404 NOT_FOUND.
+DEFAULT_MODEL = "gemini-flash-latest"
+
 
 @dataclass(frozen=True)
 class Config:
@@ -45,7 +50,7 @@ def load_config() -> Config:
         ValueError: If the configuration is invalid.
     """
 
-    model = os.getenv("MODEL", "gemini-2.5-flash")
+    model = os.getenv("MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
 
     knowledge_source = os.getenv(
         "KNOWLEDGE_SOURCE",
